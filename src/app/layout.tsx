@@ -8,12 +8,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="th">
-      <body className="bg-black text-white">
+      <body className="bg-background text-foreground antialiased min-h-screen flex flex-col">
         {/* 🔥 HEADER FIXED */}
         <Header />
 
         {/* CONTENT */}
-        <main className="pt-16">
+        <main className="pt-20 flex-grow pb-10">
           {children}
         </main>
       </body>

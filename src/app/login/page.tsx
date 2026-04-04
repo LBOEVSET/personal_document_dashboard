@@ -86,61 +86,84 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col justify-center items-center text-white gap-4">
-      <h1 className="text-2xl font-bold">Login</h1>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-800 via-zinc-950 to-black">
+      {/* Login Card */}
+      <div className="w-full max-w-md bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 p-8 rounded-2xl shadow-2xl flex flex-col gap-6">
+        
+        <div className="text-center mb-2">
+          <h1 className="text-3xl font-bold text-white tracking-tight">Welcome Back</h1>
+          <p className="text-zinc-400 text-sm mt-2">กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ</p>
+        </div>
 
-      <input
-        className="border p-3 w-[300px] text-white bg-black"
-        placeholder="username"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-      />
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5 block">Username</label>
+            <input
+              className="input-modern"
+              placeholder="Enter your username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </div>
 
-      <input
-        type="password"
-        className="border p-3 w-[300px] text-white bg-black"
-        placeholder="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+          <div>
+            <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5 block">Password</label>
+            <input
+              type="password"
+              className="input-modern"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+        </div>
 
-      <button
-        onClick={handleLogin}
-        disabled={loading}
-        className="bg-red-600 px-6 py-2 rounded"
-      >
-        Login
-      </button>
+        <div className="flex flex-col gap-3 mt-4">
+          <button
+            onClick={handleLogin}
+            disabled={loading}
+            className="btn-primary bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-50"
+          >
+            {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
+          </button>
 
-      <button
-        onClick={handleFingerprint}
-        className="bg-blue-600 px-6 py-2 rounded"
-      >
-        ✋ Login with Fingerprint
-      </button>
+          <div className="relative flex items-center py-2">
+            <div className="flex-grow border-t border-zinc-800"></div>
+            <span className="flex-shrink-0 mx-4 text-zinc-500 text-xs">หรือ</span>
+            <div className="flex-grow border-t border-zinc-800"></div>
+          </div>
 
-      {/* ================= SCAN MODAL ================= */}
+          <button
+            onClick={handleFingerprint}
+            className="btn-primary bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700"
+          >
+            <span className="text-xl">🖐</span> สแกนลายนิ้วมือ
+          </button>
+        </div>
+      </div>
+
+      {/* SCAN MODAL */}
       {showScan && (
-        <div className="fixed inset-0 bg-black/60 flex justify-center items-center">
-          <div className="bg-white text-black p-6 rounded-xl text-center">
-            <div className="font-bold mb-4">Scan Fingerprint</div>
-
-            <div className="border p-6 mb-4">
-              🖐 วางนิ้ว (mock)
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+          <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl w-full max-w-sm text-center shadow-2xl transform transition-all">
+            <div className="w-16 h-16 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+               <span className="text-3xl">🖐</span>
             </div>
+            <h3 className="text-xl font-bold text-white mb-2">Scan Fingerprint</h3>
+            <p className="text-zinc-400 text-sm mb-6">กรุณาวางนิ้วบนเครื่องสแกนเพื่อเข้าสู่ระบบ</p>
 
             <button
               onClick={handleConfirmScan}
-              className="bg-green-600 text-white px-4 py-2 rounded w-full mb-2"
+              className="btn-primary bg-blue-600 hover:bg-blue-500 text-white w-full mb-3"
             >
-              Confirm
+              ยืนยันสแกน
             </button>
 
             <button
               onClick={() => setShowScan(false)}
-              className="text-gray-500"
+              className="text-zinc-500 hover:text-white transition-colors text-sm w-full py-2"
             >
-              Cancel
+              ยกเลิก
             </button>
           </div>
         </div>
