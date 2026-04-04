@@ -35,6 +35,7 @@ export default function InmateForm({ defaultValue, onClose }: any) {
 
   const [file, setFile] = useState<File | null>(null);
   const [showScan, setShowScan] = useState(false);
+  const [isEditingFingerprint, setIsEditingFingerprint] = useState(false);
 
   useEffect(() => {
     if (defaultValue) {
@@ -135,7 +136,7 @@ export default function InmateForm({ defaultValue, onClose }: any) {
         isVerified: true,
       }));
 
-      alert('ผูกลายนิ้วมือสำเร็จ');
+      alert(form.isVerified ? 'แก้ไขลายนิ้วมือสำเร็จ' : 'ผูกลายนิ้วมือสำเร็จ');
       setShowScan(false);
     } catch (err) {
       console.error(err);
@@ -156,18 +157,19 @@ export default function InmateForm({ defaultValue, onClose }: any) {
         </button>
 
         <button
-          disabled={form.isVerified}
           onClick={() => {
-            if (form.isVerified) return;
+            if (form.isVerified) {
+              setIsEditingFingerprint(true); // 🔥 เข้า mode แก้ไข
+            }
             setShowScan(true);
           }}
           className={`px-3 py-1 rounded ${
             form.isVerified
-              ? 'bg-gray-400 cursor-not-allowed'
+              ? 'bg-yellow-500 text-white'
               : 'bg-green-600 text-white'
           }`}
         >
-          {form.isVerified ? 'ยืนยันแล้ว' : '🖐 สแกนนิ้ว'}
+          {form.isVerified ? '🔄 แก้ไขลายนิ้วมือ' : '🖐 สแกนนิ้ว'}
         </button>
       </div>
 
@@ -175,6 +177,7 @@ export default function InmateForm({ defaultValue, onClose }: any) {
       <div className="border rounded-xl p-4 flex flex-col gap-3">
         <div className="font-bold">ข้อมูลพื้นฐาน</div>
 
+        <label className="label">ชื่อ</label>
         <input
           placeholder="ชื่อ"
           value={form.name}
@@ -182,6 +185,7 @@ export default function InmateForm({ defaultValue, onClose }: any) {
           className="input"
         />
 
+        <label className="label">รหัสผู้ต้องขัง</label>
         <input
           placeholder="รหัสผู้ต้องขัง"
           value={form.id}
@@ -190,6 +194,7 @@ export default function InmateForm({ defaultValue, onClose }: any) {
           className="input bg-gray-100"
         />
 
+        <label className="label">ประเภทผู้ต้องขัง</label>
         <input
           placeholder="ประเภทผู้ต้องขัง"
           value={form.category}
@@ -202,6 +207,7 @@ export default function InmateForm({ defaultValue, onClose }: any) {
       <div className="border rounded-xl p-4 flex flex-col gap-3">
         <div className="font-bold">ข้อมูลคดี</div>
 
+        <label className="label">สถานะ</label>
         <input
           placeholder="สถานะ"
           value={form.status}
@@ -219,6 +225,8 @@ export default function InmateForm({ defaultValue, onClose }: any) {
           />
         </div>
 
+
+        <label className="label">ประเภทคดี</label>
         <input
           placeholder="ประเภทคดี"
           value={form.caseType}
@@ -226,6 +234,7 @@ export default function InmateForm({ defaultValue, onClose }: any) {
           className="input"
         />
 
+        <label className="label">โทษ</label>
         <input
           placeholder="โทษ"
           value={form.sentence}
@@ -238,10 +247,19 @@ export default function InmateForm({ defaultValue, onClose }: any) {
       <div className="border rounded-xl p-4 flex flex-col gap-3">
         <div className="font-bold">วันที่</div>
 
+        <label className="label">วันที่รับตัว</label>
         <input type="date" value={form.startDate} onChange={(e) => handleChange('startDate', e.target.value)} className="input" />
+
+        <label className="label">พ้นโทษกักขัง</label>
         <input type="date" value={form.releaseDate} onChange={(e) => handleChange('releaseDate', e.target.value)} className="input" />
+
+        <label className="label">กักขังนับแต่</label>
         <input type="date" value={form.imprisonDate} onChange={(e) => handleChange('imprisonDate', e.target.value)} className="input" />
+
+        <label className="label">วันพ้นโทษคดีสุดท้าย</label>
         <input type="date" value={form.endDate} onChange={(e) => handleChange('endDate', e.target.value)} className="input" />
+
+        <label className="label">วันที่(คดีถึงที่สุด)เด็ดขาดคดีแรก</label>
         <input type="date" value={form.lastDate} onChange={(e) => handleChange('lastDate', e.target.value)} className="input" />
       </div>
 
@@ -249,10 +267,15 @@ export default function InmateForm({ defaultValue, onClose }: any) {
       <div className="border rounded-xl p-4 flex flex-col gap-3">
         <div className="font-bold">ข้อมูลเพิ่มเติม (บุคคล)</div>
 
+        <label className="label">อายุ</label>
         <input placeholder="อายุ" value={form.detail?.age} onChange={(e) => handleDetailChange('age', e.target.value)} className="input" />
+        <label className="label">สัญชาติ</label>
         <input placeholder="สัญชาติ" value={form.detail?.nationality} onChange={(e) => handleDetailChange('nationality', e.target.value)} className="input" />
+        <label className="label">ศาสนา</label>
         <input placeholder="ศาสนา" value={form.detail?.religion} onChange={(e) => handleDetailChange('religion', e.target.value)} className="input" />
+        <label className="label">ประเภทอายัด</label>
         <input placeholder="ประเภทอายัด" value={form.detail?.holdType} onChange={(e) => handleDetailChange('holdType', e.target.value)} className="input" />
+        <label className="label">หน่วยงานที่อายัด</label>
         <input placeholder="หน่วยงานที่อายัด" value={form.detail?.holdAgency} onChange={(e) => handleDetailChange('holdAgency', e.target.value)} className="input" />
       </div>
 

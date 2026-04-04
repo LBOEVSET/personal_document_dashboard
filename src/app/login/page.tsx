@@ -20,10 +20,24 @@ export default function LoginPage() {
 
       const res = await api('/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({
+          username,
+          password,
+        }),
       });
 
+      const user = res.data.user;
+
+      // ✅ TOKEN
       localStorage.setItem('accessToken', res.data.accessToken);
+      localStorage.setItem('refreshToken', res.data.refreshToken);
+
+      // 🔥 FIX: SAVE USER
+      localStorage.setItem('userId', user.id);
+      localStorage.setItem('name', user.name);
+      localStorage.setItem('role', user.role);
+      localStorage.setItem('profileImage', user.profileImage || '');
+      localStorage.setItem('isVerified', user.isVerified ? 'true' : 'false');
 
       router.push('/dashboard');
     } catch (err: any) {
@@ -36,7 +50,7 @@ export default function LoginPage() {
 
   // ================= OPEN SCAN =================
   const handleFingerprint = () => {
-    setShowScan(true);
+    setShowScan(true); // ✅ เปิด modal
   };
 
   // ================= CONFIRM SCAN =================
@@ -51,8 +65,19 @@ export default function LoginPage() {
         }),
       });
 
-      localStorage.setItem('accessToken', res.data.accessToken);
+      const user = res.data.user;
 
+      // ✅ SAVE ทุกอย่างเหมือน login
+      localStorage.setItem('accessToken', res.data.accessToken);
+      localStorage.setItem('refreshToken', res.data.refreshToken);
+
+      localStorage.setItem('userId', user.id);
+      localStorage.setItem('name', user.name);
+      localStorage.setItem('role', user.role);
+      localStorage.setItem('profileImage', user.profileImage || '');
+      localStorage.setItem('isVerified', user.isVerified ? 'true' : 'false');
+
+      setShowScan(false); // ปิด modal
       router.push('/dashboard');
     } catch (err) {
       console.error(err);

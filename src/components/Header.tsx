@@ -11,26 +11,41 @@ export default function Header() {
   const [showProfile, setShowProfile] = useState(false);
   const [showScan, setShowScan] = useState(false);
 
+  const [showCreateAdmin, setShowCreateAdmin] = useState(false);
+  const [showScanAdmin, setShowScanAdmin] = useState(false);
+
+  const [adminForm, setAdminForm] = useState<any>({
+    username: '',
+    password: '',
+    name: '',
+    userId: '',
+  });
+
   const [user, setUser] = useState<any>({
     id: '',
     name: '',
     profileImage: null,
     isVerified: false,
+    role: '',
   });
 
   // ================= LOAD USER =================
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
-    const name = localStorage.getItem('name');
-    const profileImage = localStorage.getItem('profileImage');
-    const isVerified = localStorage.getItem('isVerified') === 'true';
+    //! MOCK FINGER ID
+    const loadUser = () => {
+      setUser({
+        id: localStorage.getItem('userId') || '',
+        name: localStorage.getItem('name') || '',
+        profileImage: localStorage.getItem('profileImage') || null,
+        isVerified: localStorage.getItem('isVerified') === 'true',
+        role: localStorage.getItem('role'),
+      });
+    };
 
-    setUser({
-      id: userId || 'admin-mock-id',
-      name: name || 'Admin',
-      profileImage: profileImage || null,
-      isVerified,
-    });
+    loadUser();
+
+    window.addEventListener('storage', loadUser); // 🔥 sync tab
+    return () => window.removeEventListener('storage', loadUser);
   }, []);
 
   if (pathname === '/login') return null;
@@ -58,13 +73,11 @@ export default function Header() {
 
       const imageUrl = res.data.url;
 
-      // ✅ update state
       setUser((prev: any) => ({
         ...prev,
         profileImage: imageUrl,
       }));
 
-      // ✅ persist
       localStorage.setItem('profileImage', imageUrl);
 
       alert('Upload success');
@@ -77,27 +90,20 @@ export default function Header() {
   // ================= VERIFY =================
   const handleScanSubmit = async () => {
     try {
-      if (!user.id) {
-        alert('no userId');
-        return;
-      }
-
       await api('/auth/login/fingerprint', {
         method: 'POST',
         body: JSON.stringify({
           userId: user.id,
-          username: user.id,
+          username: user.name,
           name: user.name,
         }),
       });
 
-      // ✅ update state
       setUser((prev: any) => ({
         ...prev,
         isVerified: true,
       }));
 
-      // ✅ persist
       localStorage.setItem('isVerified', 'true');
 
       alert('verified');
@@ -108,6 +114,41 @@ export default function Header() {
     }
   };
 
+  // ================= ADMIN CREATE =================
+  const genUserId = () => {
+    return 'admin-' + Math.random().toString(36).substring(2, 10);
+  };
+
+  const handleScanAdmin = () => {
+    const id = genUserId();
+
+    setAdminForm((prev: any) => ({
+      ...prev,
+      userId: id,
+    }));
+
+    setShowScanAdmin(false);
+    alert('scan success');
+  };
+
+  const handleCreateAdmin = async () => {
+    try {
+      await api('/auth/register/admin', {
+        method: 'POST',
+        body: JSON.stringify({
+          ...adminForm,
+          secret: 'super_secret_admin_registration_key',
+        }),
+      });
+
+      alert('Admin created');
+      setShowCreateAdmin(false);
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || 'error');
+    }
+  };
+
   return (
     <>
       {/* HEADER */}
@@ -115,16 +156,30 @@ export default function Header() {
         {backButton}
 
         <div className="flex items-center gap-4">
+          {/* ✅ แสดงเฉพาะ ADMIN */}
+          {user.role === 'ADMIN' && (
+            <button
+              onClick={() => setShowCreateAdmin(true)}
+              className="bg-green-600 px-3 py-1 rounded text-white"
+            >
+              + Admin
+            </button>
+          )}
+
           {/* PROFILE ICON */}
           <div
             onClick={() => setShowProfile(true)}
             className="w-10 h-10 rounded-full bg-gray-600 cursor-pointer overflow-hidden"
           >
-            {user.profileImage && (
+            {user.profileImage ? (
               <img
                 src={`http://localhost:3111${user.profileImage}`}
                 className="w-full h-full object-cover"
               />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                No Image
+              </div>
             )}
           </div>
 
@@ -152,12 +207,12 @@ export default function Header() {
             {/* IMAGE */}
             <div className="flex flex-col items-center gap-2">
               <div className="w-20 h-20 bg-gray-300 rounded-full overflow-hidden">
-                {user.profileImage && (
+                {user.profileImage ? (
                   <img
                     src={`http://localhost:3111${user.profileImage}`}
                     className="w-full h-full object-cover"
                   />
-                )}
+                ) : null}
               </div>
 
               <label className="text-blue-500 cursor-pointer text-sm">
@@ -175,8 +230,7 @@ export default function Header() {
 
             {/* INFO */}
             <div className="text-sm flex flex-col gap-1">
-              {/* ❌ เอา ID ออก */}
-              <div>Name: {user.name}</div>
+              <div>Name: {user.name || '-'}</div>
             </div>
 
             {/* VERIFY */}
@@ -189,25 +243,19 @@ export default function Header() {
                   : 'bg-green-600 text-white'
               }`}
             >
-              {user.isVerified
-                ? 'Verified ✅'
-                : 'Verify Fingerprint'}
+              {user.isVerified ? 'Verified ✅' : 'Verify Fingerprint'}
             </button>
           </div>
         </div>
       )}
 
-      {/* SCAN MODAL */}
+      {/* SCAN USER */}
       {showScan && (
         <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-xl text-center">
-            <div className="font-bold mb-4">
-              Scan Fingerprint
-            </div>
+            <div className="font-bold mb-4">Scan Fingerprint</div>
 
-            <div className="border p-6 mb-4">
-              🖐 วางนิ้ว (mock)
-            </div>
+            <div className="border p-6 mb-4">🖐 วางนิ้ว (mock)</div>
 
             <button
               onClick={handleScanSubmit}
@@ -218,6 +266,92 @@ export default function Header() {
 
             <button
               onClick={() => setShowScan(false)}
+              className="text-gray-500"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ADMIN CREATE */}
+      {showCreateAdmin && (
+        <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-xl w-[350px] text-black">
+            <h2 className="font-bold mb-4">Create Admin</h2>
+
+            <input
+              placeholder="username"
+              className="border p-2 w-full mb-2"
+              onChange={(e) =>
+                setAdminForm({
+                  ...adminForm,
+                  username: e.target.value,
+                })
+              }
+            />
+
+            <input
+              placeholder="password"
+              type="password"
+              className="border p-2 w-full mb-2"
+              onChange={(e) =>
+                setAdminForm({
+                  ...adminForm,
+                  password: e.target.value,
+                })
+              }
+            />
+
+            <input
+              placeholder="name"
+              className="border p-2 w-full mb-2"
+              onChange={(e) =>
+                setAdminForm({
+                  ...adminForm,
+                  name: e.target.value,
+                })
+              }
+            />
+
+            <button
+              onClick={() => setShowScanAdmin(true)}
+              className="bg-blue-600 text-white w-full py-2 rounded mb-2"
+            >
+              {adminForm.userId ? '✅ Scanned' : 'Scan Fingerprint'}
+            </button>
+
+            <button
+              onClick={handleCreateAdmin}
+              className="bg-green-600 text-white w-full py-2 rounded mb-2"
+            >
+              Create
+            </button>
+
+            <button onClick={() => setShowCreateAdmin(false)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* SCAN ADMIN */}
+      {showScanAdmin && (
+        <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-xl text-center">
+            <div className="font-bold mb-4">Scan Fingerprint</div>
+
+            <div className="border p-6 mb-4">🖐 วางนิ้ว (mock)</div>
+
+            <button
+              onClick={handleScanAdmin}
+              className="bg-green-600 text-white px-4 py-2 rounded w-full mb-2"
+            >
+              Confirm
+            </button>
+
+            <button
+              onClick={() => setShowScanAdmin(false)}
               className="text-gray-500"
             >
               Cancel
