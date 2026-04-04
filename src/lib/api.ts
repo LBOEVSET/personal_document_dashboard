@@ -165,15 +165,17 @@ export const uploadDocument = async (
   }
 ) => {
   const formData = new FormData();
-
   formData.append('file', file);
 
-  if (body.department) formData.append('department', body.department);
-  if (body.mainId) formData.append('mainId', body.mainId);
-  if (body.subId) formData.append('subId', body.subId);
-  if (body.groupId) formData.append('groupId', body.groupId);
+  // ✅ build query string
+  const query = new URLSearchParams();
 
-  return api('/admin/upload/document', {
+  if (body.department) query.append('department', body.department);
+  if (body.mainId) query.append('mainId', body.mainId);
+  if (body.subId) query.append('subId', body.subId);
+  if (body.groupId) query.append('groupId', body.groupId);
+
+  return api(`/admin/upload/document?${query.toString()}`, {
     method: 'POST',
     body: formData,
   });

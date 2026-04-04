@@ -9,7 +9,7 @@ export default function InmateForm({ defaultValue, onClose }: any) {
   const [form, setForm] = useState<any>({
     id: '', name: '', status: '', cases: 0, caseType: '', category: '', sentence: '',
     startDate: '', releaseDate: '', imprisonDate: '', endDate: '', lastDate: '',
-    sequestrationType: '', department: '', transferFrom: '', progressStep: 1, isVerified: false,
+    transferFrom: '', progressStep: 1, isVerified: false,
     detail: { age: '', nationality: '', religion: '', holdType: '', holdAgency: '' },
   });
 
