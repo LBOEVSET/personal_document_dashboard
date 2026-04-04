@@ -23,7 +23,7 @@ export const api = async (url: string, options: any = {}) => {
 
     // 🔥 บังคับไม่ให้ Browser จำ Cache โดยการต่อท้ายด้วยเวลาปัจจุบัน (เฉพาะดึงข้อมูล GET)
     if (!options.method || options.method === 'GET') {
-      finalUrl += (finalUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+      finalUrl += (finalUrl.includes('?') ? '&' : '?') ;
     }
 
     return fetch(finalUrl, {

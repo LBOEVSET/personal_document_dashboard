@@ -20,7 +20,7 @@ export default function Page() {
         let endpoint = department === 'LEGAL' ? '/menu/legalCategories' : '/menu/prDepartments';
         
         // 🔥 3. ใส่ Timestamp ตรงนี้แทน เพื่อป้องกัน Next.js/Browser จำ Cache โดยไม่ติด CORS
-        const json = await api(`${endpoint}?t=${Date.now()}`);
+        const json = await api(`${endpoint}`);
         
         setData(json.data || []);
       } catch (err) { 
