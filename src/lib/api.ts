@@ -17,14 +17,23 @@ export const api = async (url: string, options: any = {}) => {
 
   const isFormData = options.body instanceof FormData;
 
+  // src/lib/api.ts
   const doRequest = async (token: string | null) => {
-    return fetch(BASE + url, {
+    let finalUrl = BASE + url;
+
+    // 🔥 บังคับไม่ให้ Browser จำ Cache โดยการต่อท้ายด้วยเวลาปัจจุบัน (เฉพาะดึงข้อมูล GET)
+    if (!options.method || options.method === 'GET') {
+      finalUrl += (finalUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+    }
+
+    return fetch(finalUrl, {
       ...options,
+      cache: 'no-store',
       headers: {
         ...(options.headers || {}),
         ...(isFormData
           ? {}
-          : { 'Content-Type': 'application/json' }), // 🔥 FIX ตรงนี้
+          : { 'Content-Type': 'application/json' }), 
         Authorization: token ? `Bearer ${token}` : '',
       },
     });
