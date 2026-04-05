@@ -3,15 +3,15 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
+// 📌 1. ต้องมีการ Import ตัวนี้ถึงจะเรียกใช้ <DashboardFingerprint /> ได้
+import DashboardFingerprint from '@/components/DashboardFingerprint'; 
 
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
 
   const [showProfile, setShowProfile] = useState(false);
-  const [showScan, setShowScan] = useState(false);
   const [showCreateAdmin, setShowCreateAdmin] = useState(false);
-  const [showScanAdmin, setShowScanAdmin] = useState(false);
 
   const [adminForm, setAdminForm] = useState<any>({
     username: '',
@@ -68,28 +68,26 @@ export default function Header() {
     }
   };
 
-  const handleScanSubmit = async () => {
+  // ================= FINGERPRINT SUCCESS (PROFILE) =================
+  const handleProfileScanSuccess = async (scannedId: string) => {
     try {
       await api('/auth/login/fingerprint', {
         method: 'POST',
-        body: JSON.stringify({ userId: user.id, username: user.name, name: user.name }),
+        body: JSON.stringify({ userId: scannedId, username: user.name, name: user.name }),
       });
       setUser((prev: any) => ({ ...prev, isVerified: true }));
       localStorage.setItem('isVerified', 'true');
-      alert('verified');
-      setShowScan(false);
+      alert('ยืนยันลายนิ้วมือสำเร็จ');
     } catch (err) {
       console.error(err);
-      alert('scan failed');
+      alert('ยืนยันลายนิ้วมือไม่สำเร็จ');
     }
   };
 
-  const genUserId = () => 'admin-' + Math.random().toString(36).substring(2, 10);
-
-  const handleScanAdmin = () => {
-    setAdminForm((prev: any) => ({ ...prev, userId: genUserId() }));
-    setShowScanAdmin(false);
-    alert('scan success');
+  // ================= FINGERPRINT SUCCESS (ADMIN CREATE) =================
+  const handleAdminScanSuccess = (scannedId: string) => {
+    setAdminForm((prev: any) => ({ ...prev, userId: scannedId }));
+    alert('บันทึกลายนิ้วมือ Admin สำเร็จ');
   };
 
   const handleCreateAdmin = async () => {
@@ -133,7 +131,7 @@ export default function Header() {
             className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-zinc-700 cursor-pointer overflow-hidden hover:border-blue-500 transition-colors"
           >
             {user.profileImage ? (
-              <img src={`http://localhost:3111${user.profileImage}`} className="w-full h-full object-cover" />
+              <img src={`http://localhost:3111${user.profileImage}`} className="w-full h-full object-cover" alt="Profile" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-xs text-zinc-500">Img</div>
             )}
@@ -154,7 +152,7 @@ export default function Header() {
               <div className="relative group">
                 <div className="w-24 h-24 bg-zinc-800 rounded-full overflow-hidden border-4 border-zinc-800">
                   {user.profileImage ? (
-                    <img src={`http://localhost:3111${user.profileImage}`} className="w-full h-full object-cover" />
+                    <img src={`http://localhost:3111${user.profileImage}`} className="w-full h-full object-cover" alt="Profile" />
                   ) : <div className="w-full h-full flex items-center justify-center text-zinc-500">No Image</div>}
                 </div>
                 <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-1.5 rounded-full cursor-pointer hover:bg-blue-500 transition-colors shadow-lg">
@@ -167,17 +165,32 @@ export default function Header() {
             </div>
 
             <div className="flex flex-col gap-3 mt-4 flex-grow">
-              <button
-                disabled={user.isVerified}
-                onClick={() => setShowScan(true)}
-                className={`btn-primary w-full ${user.isVerified ? 'bg-zinc-800 text-green-400 border border-green-900/50 cursor-default' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
-              >
-                {user.isVerified ? '✅ ยืนยันลายนิ้วมือแล้ว' : '🖐 ยืนยันลายนิ้วมือ'}
-              </button>
+              {user.isVerified ? (
+                <button disabled className="btn-primary w-full bg-zinc-800 text-green-400 border border-green-900/50 cursor-default">
+                  ✅ ยืนยันลายนิ้วมือแล้ว
+                </button>
+              ) : (
+                <div className="flex justify-center w-full">
+                  <DashboardFingerprint onScanSuccess={handleProfileScanSuccess} />
+                </div>
+              )}
+
+              {/* 📌 2. ปุ่มจัดการ Admin สำหรับคนที่เป็น ADMIN เท่านั้น */}
+              {user.role === 'ADMIN' && (
+                <button
+                  onClick={() => {
+                    router.push('/admin-management');
+                    setShowProfile(false);
+                  }}
+                  className="btn-primary w-full bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 mt-2"
+                >
+                  👥 จัดการ Admin ทั้งหมด
+                </button>
+              )}
             </div>
 
             <button
-              onClick={() => { localStorage.clear(); router.push('/login'); }}
+              onClick={() => { localStorage.clear(); router.push('/login'); setShowProfile(false); }}
               className="btn-primary bg-red-600/10 hover:bg-red-600/20 text-red-500 border border-red-500/20 mt-auto"
             >
               ออกจากระบบ
@@ -186,27 +199,7 @@ export default function Header() {
         </div>
       )}
 
-      {/* SCAN MODALS */}
-      {(showScan || showScanAdmin) && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl w-full max-w-sm text-center shadow-2xl">
-            <div className="w-16 h-16 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-               <span className="text-3xl">🖐</span>
-            </div>
-            <div className="font-bold text-white text-xl mb-2">Scan Fingerprint</div>
-            <div className="text-zinc-400 text-sm mb-6">กรุณาวางนิ้ว (จำลอง)</div>
-
-            <button onClick={showScan ? handleScanSubmit : handleScanAdmin} className="btn-primary bg-blue-600 hover:bg-blue-500 text-white w-full mb-3">
-              ยืนยันการสแกน
-            </button>
-            <button onClick={() => showScan ? setShowScan(false) : setShowScanAdmin(false)} className="text-zinc-500 hover:text-white transition-colors text-sm w-full py-2">
-              ยกเลิก
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ADMIN CREATE */}
+      {/* 📌 3. ADMIN CREATE MODAL (ที่แก้ไขแล้ว) */}
       {showCreateAdmin && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl w-full max-w-sm text-zinc-100 shadow-2xl">
@@ -217,9 +210,18 @@ export default function Header() {
               <input placeholder="Name" className="input-modern" onChange={(e) => setAdminForm({ ...adminForm, name: e.target.value })} />
             </div>
 
-            <button onClick={() => setShowScanAdmin(true)} className={`btn-primary w-full mb-3 ${adminForm.userId ? 'bg-green-600/20 text-green-400 border border-green-600/30' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}>
-              {adminForm.userId ? '✅ สแกนลายนิ้วมือแล้ว' : '🖐 สแกนลายนิ้วมือ'}
-            </button>
+            <div className="mb-4 flex justify-center w-full">
+              {adminForm.userId ? (
+                <button disabled className="btn-primary w-full bg-green-600/20 text-green-400 border border-green-600/30 cursor-default">
+                  ✅ สแกนลายนิ้วมือแล้ว ({adminForm.userId})
+                </button>
+              ) : (
+                <div className="w-full">
+                   <DashboardFingerprint onScanSuccess={handleAdminScanSuccess} />
+                </div>
+              )}
+            </div>
+
             <button onClick={handleCreateAdmin} className="btn-primary bg-blue-600 hover:bg-blue-500 text-white w-full mb-3">
               ยืนยันการสร้าง
             </button>

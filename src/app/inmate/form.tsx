@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import DashboardFingerprint from '@/components/DashboardFingerprint'; // 📌 นำเข้า Component สแกนนิ้วมือจริง
 
 export default function InmateForm({ defaultValue, onClose }: any) {
   const isEdit = !!defaultValue;
@@ -14,8 +15,6 @@ export default function InmateForm({ defaultValue, onClose }: any) {
   });
 
   const [file, setFile] = useState<File | null>(null);
-  const [showScan, setShowScan] = useState(false);
-  const [isEditingFingerprint, setIsEditingFingerprint] = useState(false);
 
   useEffect(() => {
     if (defaultValue) {
@@ -34,7 +33,6 @@ export default function InmateForm({ defaultValue, onClose }: any) {
   const handleDetailChange = (key: string, value: any) => setForm((prev: any) => ({ ...prev, detail: { ...prev.detail, [key]: value } }));
 
   const genMockId = () => 'mock-' + Math.random().toString(36).substring(2, 10);
-  const genUserId = () => 'finger-' + Math.random().toString(36).substring(2, 10);
 
   const handleSubmit = async () => {
     try {
@@ -53,13 +51,20 @@ export default function InmateForm({ defaultValue, onClose }: any) {
     } catch (err) { console.error(err); alert('error'); }
   };
 
-  const handleScanSubmit = async () => {
+  // ================= FINGERPRINT SUCCESS =================
+  const handleScanSuccess = async (scannedId: string) => {
     try {
-      await api('/auth/verify-register/inmate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: genUserId(), id: form.id, name: form.name }) });
+      await api('/auth/verify-register/inmate', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ userId: scannedId, id: form.id, name: form.name }) 
+      });
       setForm((prev: any) => ({ ...prev, isVerified: true }));
       alert(form.isVerified ? 'แก้ไขลายนิ้วมือสำเร็จ' : 'ผูกลายนิ้วมือสำเร็จ');
-      setShowScan(false);
-    } catch (err) { console.error(err); alert('scan failed'); }
+    } catch (err) { 
+      console.error(err); 
+      alert('ผูกลายนิ้วมือล้มเหลว'); 
+    }
   };
 
   return (
@@ -71,15 +76,8 @@ export default function InmateForm({ defaultValue, onClose }: any) {
       </div>
 
       <div className="flex justify-end">
-         <button
-          onClick={() => {
-            if (form.isVerified) setIsEditingFingerprint(true);
-            setShowScan(true);
-          }}
-          className={`btn-primary px-4 py-2 text-sm ${form.isVerified ? 'bg-amber-600/20 text-amber-500 border border-amber-600/50 hover:bg-amber-600/30' : 'bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-white'}`}
-        >
-          {form.isVerified ? '🔄 แก้ไขลายนิ้วมือ' : '🖐 สแกนลายนิ้วมือ'}
-        </button>
+         {/* 📌 เรียกใช้ Component เครื่องสแกนนิ้วมือ */}
+         <DashboardFingerprint onScanSuccess={handleScanSuccess} />
       </div>
 
       {/* BASIC */}
@@ -156,19 +154,6 @@ export default function InmateForm({ defaultValue, onClose }: any) {
         <button onClick={onClose} className="btn-primary bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white flex-1">ยกเลิก</button>
         <button onClick={handleSubmit} className="btn-primary bg-blue-600 hover:bg-blue-500 text-white flex-1">บันทึกข้อมูล</button>
       </div>
-
-      {/* SCAN MODAL */}
-      {showScan && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center z-[60] p-4">
-          <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl w-full max-w-sm text-center shadow-2xl">
-            <div className="w-16 h-16 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4"><span className="text-3xl">🖐</span></div>
-            <div className="text-xl font-bold mb-2 text-white">สแกนลายนิ้วมือ</div>
-            <div className="text-zinc-400 text-sm mb-6">กรุณาวางนิ้วบนเครื่องสแกน (mock)</div>
-            <button onClick={handleScanSubmit} className="btn-primary bg-blue-600 hover:bg-blue-500 text-white w-full mb-3">ยืนยันสแกน</button>
-            <button onClick={() => setShowScan(false)} className="text-zinc-500 hover:text-white transition-colors text-sm w-full py-2">ยกเลิก</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import DashboardFingerprint from '@/components/DashboardFingerprint'; // 📌 นำเข้า Component สแกนนิ้วมือจริง
 
 export default function LoginPage() {
   const router = useRouter();
@@ -10,8 +11,6 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const [showScan, setShowScan] = useState(false);
 
   // ================= NORMAL LOGIN =================
   const handleLogin = async () => {
@@ -28,11 +27,9 @@ export default function LoginPage() {
 
       const user = res.data.user;
 
-      // ✅ TOKEN
       localStorage.setItem('accessToken', res.data.accessToken);
       localStorage.setItem('refreshToken', res.data.refreshToken);
 
-      // 🔥 FIX: SAVE USER
       localStorage.setItem('userId', user.id);
       localStorage.setItem('name', user.name);
       localStorage.setItem('role', user.role);
@@ -48,26 +45,18 @@ export default function LoginPage() {
     }
   };
 
-  // ================= OPEN SCAN =================
-  const handleFingerprint = () => {
-    setShowScan(true); // ✅ เปิด modal
-  };
-
-  // ================= CONFIRM SCAN =================
-  const handleConfirmScan = async () => {
+  // ================= FINGERPRINT LOGIN (API จริง) =================
+  const handleFingerprintSuccess = async (inmateId: string) => {
     try {
-      const mockUserId = '6462cba0-1993-42b0-9d93-c8498640a9c4';
-
       const res = await api('/auth/login/fingerprint', {
         method: 'POST',
         body: JSON.stringify({
-          userId: mockUserId,
+          userId: inmateId, // 📌 ส่งรหัสที่ได้จากเครื่องสแกนไปให้ Backend
         }),
       });
 
       const user = res.data.user;
 
-      // ✅ SAVE ทุกอย่างเหมือน login
       localStorage.setItem('accessToken', res.data.accessToken);
       localStorage.setItem('refreshToken', res.data.refreshToken);
 
@@ -77,11 +66,10 @@ export default function LoginPage() {
       localStorage.setItem('profileImage', user.profileImage || '');
       localStorage.setItem('isVerified', user.isVerified ? 'true' : 'false');
 
-      setShowScan(false); // ปิด modal
       router.push('/dashboard');
     } catch (err) {
       console.error(err);
-      alert('Fingerprint login failed');
+      alert('Fingerprint login failed (ไม่พบข้อมูลในระบบ หรือเชื่อมต่อผิดพลาด)');
     }
   };
 
@@ -133,41 +121,12 @@ export default function LoginPage() {
             <div className="flex-grow border-t border-zinc-800"></div>
           </div>
 
-          <button
-            onClick={handleFingerprint}
-            className="btn-primary bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700"
-          >
-            <span className="text-xl">🖐</span> สแกนลายนิ้วมือ
-          </button>
-        </div>
-      </div>
-
-      {/* SCAN MODAL */}
-      {showScan && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl w-full max-w-sm text-center shadow-2xl transform transition-all">
-            <div className="w-16 h-16 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-               <span className="text-3xl">🖐</span>
-            </div>
-            <h3 className="text-xl font-bold text-white mb-2">Scan Fingerprint</h3>
-            <p className="text-zinc-400 text-sm mb-6">กรุณาวางนิ้วบนเครื่องสแกนเพื่อเข้าสู่ระบบ</p>
-
-            <button
-              onClick={handleConfirmScan}
-              className="btn-primary bg-blue-600 hover:bg-blue-500 text-white w-full mb-3"
-            >
-              ยืนยันสแกน
-            </button>
-
-            <button
-              onClick={() => setShowScan(false)}
-              className="text-zinc-500 hover:text-white transition-colors text-sm w-full py-2"
-            >
-              ยกเลิก
-            </button>
+          {/* 📌 วาง Component เครื่องสแกนนิ้วมือ */}
+          <div className="flex justify-center">
+            <DashboardFingerprint onScanSuccess={handleFingerprintSuccess} />
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

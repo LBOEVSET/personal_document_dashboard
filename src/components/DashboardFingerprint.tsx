@@ -1,8 +1,8 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 
-// 📌 กำหนด Port เป็น 3333 ตามที่คุณแจ้งไว้
-const FINGERPRINT_API = 'http://localhost:3333';
+// 📌 กำหนด Port เป็น 3010 ตามที่คุณแจ้งไว้
+const FINGERPRINT_API = 'http://localhost:3010';
 
 export default function DashboardFingerprint({ onScanSuccess }: { onScanSuccess?: (inmateId: string) => void }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
